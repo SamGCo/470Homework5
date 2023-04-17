@@ -1,0 +1,92 @@
+---
+title: "Homework-5-Cohen-1"
+author: "Sam Cohen"
+date: "2023-04-17"
+output: 
+  pdf_document:
+    template: my_template.tex
+header-includes:
+  - \usepackage{float} #use the 'float' package
+  - \floatplacement{figure}{H}
+fig_caption: yes
+---
+
+
+```{r setup, include=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(modelsummary)
+options(tinytex.verbose = TRUE)
+knitr::opts_chunk$set(echo = FALSE,warning= FALSE, message = FALSE,fig.pos="h")
+load("workspace.RData")
+```
+
+
+# Summarize
+
+## 1
+```{r fig1}
+ans1
+```
+
+## 2 
+
+Direct purchase insurance increased as a result of the Affordable Care Act and being able to purchase insurance off of state based healthcare exchanges. After a few years, programs such as reinsurance and risk corridor were removed from the exchanges. These were programs implemented in order to stabilize premiums, as stated by CMS. It is then likely that after these programs were removed, premiums may have increased resulting in consumers leaving the exchanges and leading to a decrease in direct purchasing.
+
+## 3
+
+```{r}
+ans3
+```
+
+## 4 
+
+```{r}
+ans4
+```
+
+
+# ATE Questions
+
+
+## 5
+
+```{r,fig.pos="!h"}
+knitr::kable(xtabs(q5Share~year+expand_ever,q5Data))
+```
+\newpage 
+
+## 6
+
+```{r,fig.cap="#6",fig.pos="h"}
+modelsummary::modelsummary(dd.ins.reg)
+```
+
+## 7
+
+```{r,fig.cap="#7",fig.pos="h"}
+modelsummary(m.twfe)
+```
+
+## 8
+
+The results here are not extremely different. The estimator is still negative and statistically significant, but it is a little smaller. 
+
+```{r,fig.cap="#8",fig.pos="h",results='asis'}
+cat(modelsummary(feAllYears))
+```
+
+## 9
+
+```{r}
+ans9
+```
+
+## 10
+
+```{r}
+ans10
+```
+
