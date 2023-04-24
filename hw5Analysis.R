@@ -1,7 +1,7 @@
 #1
 library(modelsummary)
 library(fixest)
-final.data<-subset(final.data,State != "District of Columbia" | State != "Puerto Rico")
+final.data<-filter(final.data,! State %in% c("Puerto Rico","District of Columbia"))
 q1Data<-final.data%>%
   mutate(insured=ins_employer+ins_direct+ins_medicaid+ins_medicare)%>%
   group_by(year)%>%
@@ -26,9 +26,9 @@ ans3
 q4Data<-final.data%>%
   filter(is.na(expand_year) | expand_year==2014)%>%
   mutate(insured=ins_employer+ins_direct+ins_medicaid+ins_medicare)%>%
-  group_by(year,expand)%>%
+  group_by(year,expand_ever)%>%
   summarize(q4Share=mean(uninsured/adult_pop))
-ans4<-ggplot(q4Data, aes(x = year, y = q4Share,color=expand)) +
+ans4<-ggplot(q4Data, aes(x = year, y = q4Share,color=expand_ever)) +
   geom_line()+
   labs(x = "Year", y = "Share of Uninsured Individuals", title = "Share of Uninsured Over Time")
 ans4
@@ -36,12 +36,15 @@ ans4
 #ATE qs 
 #5
 q5Data<-final.data%>%
-  filter(!is.na(expand_year))%>%
+  filter(is.na(expand_year) | expand_year==2014 | expand_year==2023)%>%
+  filter(! State %in% c("Puerto Rico","District of Columbia"))%>%
+  filter(year %in% c(2012,2015))%>%
   mutate(insured=ins_employer+ins_direct+ins_medicaid+ins_medicare)%>%
   group_by(year,expand_ever)%>%
-  summarize(q5Share=mean(uninsured/adult_pop))%>%
-  filter(year==2012 | year==2015)
-q5Ans<-knitr::kable(xtabs(q5Share~year+expand_ever,q5Data))
+  summarize(UninsuredPerc=mean(uninsured/adult_pop,na.rm=TRUE))
+q5Ans<-pivot_wider(q5Data, names_from="year",names_prefix = "Year ",values_from="UninsuredPerc")%>%
+  ungroup()
+#q5Ans<-knitr::kable(xtabs(q5Share~year+expand_ever,q5Data))
 q5Ans
 #6
 
@@ -58,10 +61,18 @@ q6ans
 m.twfe <- fixest::feols(perc_unins ~ treat | State + year, data=reg.dat)
 summary(m.twfe)
 #8
-reg8dat <-final.data %>% 
-  mutate(perc_unins=uninsured/adult_pop,
-         post = (year>=2014), 
-         treat=post*expand_ever)
+# reg8dat <-final.data %>% 
+#   mutate(perc_unins=uninsured/adult_pop,
+#          post = (year>=2014), 
+#          treat=post*expand_ever)
+# feAllYears <- fixest::feols(perc_unins ~ treat | State + year, data=reg8dat)
+# summary(feAllYears)
+reg8dat<-final.data%>%
+  mutate(perc_unins=uninsured/adult_pop)%>%
+  mutate(treat=case_when(
+         year>=expand_year & !is.na(expand_year)~1,
+         is.na(expand_year)~0,
+         year<expand_year & is.na(expand_year)~0))
 feAllYears <- fixest::feols(perc_unins ~ treat | State + year, data=reg8dat)
 summary(feAllYears)
 #The results here are not extremely different. The estimator is still negative and statistically significant, but it is a little smaller. 
